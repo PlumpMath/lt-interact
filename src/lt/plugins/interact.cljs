@@ -107,11 +107,15 @@
                                           (object/add-tags editor [:editor.interactive])
                                           (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)))}]})))
 
+(defn last-pos [editor]
+  (let [last-line (ed/last-line editor)
+        last-char (inc (count (ed/line editor last-line)))]
+    {:line last-line :ch last-char}))
+
 (defn append-result [editor]
   (fn [output error-output]
-    (let [last-line (ed/last-line editor)
-          last-char (inc (count (ed/line editor last-line)))]
-      (ed/replace editor {:line last-line :ch last-char} output))))
+    (ed/replace editor (last-pos editor) output)
+    (ed/move-cursor editor (update-in (last-pos editor) [:ch] dec))))
 
 (behavior ::on-eval.one
           :triggers #{:eval.one}
