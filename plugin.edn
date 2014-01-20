@@ -1,0 +1,7 @@
+{:name "Interact"
+ :version "0.0.1"
+ :desc "Run interactive sessions with commandline programs in Light Table"
+ :source "https://github.com/heyLu/lt-interact"
+ :author "Lucas Stadler"
+ :dependencies {}
+ :behaviors "interact.behaviors"}
