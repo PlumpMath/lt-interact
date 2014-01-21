@@ -103,6 +103,7 @@
                                               editor (pool/last-active)
                                               cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
                                           (object/add-tags editor [:editor.interactive])
+                                          (object/update! editor [:interact.result-fn] (fn [_ n] n) (append-result editor))
                                           (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)))}]})))
 
 (defn last-pos [editor]
@@ -121,7 +122,6 @@
                       (let [info (selection-info editor)
                             cmd (get-cmd editor)]
                           (when-not (string/blank? (:code info))
-                            (object/update! editor [:interact.result-fn] (fn [_ n] n) (append-result editor))
                             (cmd-input cmd (:code info))))))
 
 
