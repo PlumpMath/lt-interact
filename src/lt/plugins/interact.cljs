@@ -90,6 +90,19 @@
 (defui text-input [default-value]
   [:input {:type "text", :value default-value}])
 
+(defn new-input [editor]
+  (let [{:keys [line ch]} (-> @editor :interact.output-end)
+        input (.slice (ed/line editor line) (dec ch))]
+    input))
+
+(defn eval-on-last-line [cm]
+  (let [editor (pool/last-active)
+        last-line (ed/last-line editor)
+        cur-line (:line (ed/->cursor editor))]
+    (when (= cur-line last-line)
+      (cmd-input (get-cmd editor) (str (new-input editor) "\n")))
+    (.execCommand cm "newlineAndIndent")))
+
 (defn popup-set-cmd []
   (let [input (text-input "zsh")]
     (popup/popup! {:header "Set the name of the command you want to interact with"
@@ -104,7 +117,9 @@
                                               cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
                                           (object/add-tags editor [:editor.interactive])
                                           (object/update! editor [:interact.result-fn] (fn [_ n] n) (append-result editor))
-                                          (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)))}]})))
+                                          (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)
+                                          (.addKeyMap (-> @editor :ed)
+                                                      #js {"Enter" eval-on-last-line})))}]})))
 
 (defn last-pos [editor]
   (let [last-line (ed/last-line editor)
@@ -114,6 +129,7 @@
 (defn append-result [editor]
   (fn [output error-output]
     (ed/replace editor (last-pos editor) output)
+    (object/update! editor [:interact.output-end] (fn [_ n] n) (last-pos editor))
     (ed/move-cursor editor (update-in (last-pos editor) [:ch] dec))))
 
 (behavior ::on-eval.one
@@ -123,7 +139,6 @@
                             cmd (get-cmd editor)]
                           (when-not (string/blank? (:code info))
                             (cmd-input cmd (:code info))))))
-
 
 (cmd/command {:command :interact-with
               :desc "Interact: Start interaction with a command."
