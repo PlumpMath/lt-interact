@@ -31,12 +31,12 @@
 (behavior ::on-proc-out
           :triggers #{:proc.out}
           :reaction (fn [this data]
-                      (object/update! this [:proc :out] str (.toString data))))
+                      (object/update! this [:proc :out] (constantly (.toString data)))))
 
 (behavior ::on-proc-error
           :triggers #{:proc.error}
           :reaction (fn [this data]
-                      (object/update! this [:proc :error] str (.toString data))))
+                      (object/update! this [:proc :error] (constantly (.toString data)))))
 
 (behavior ::on-proc-exit
           :triggers #{:proc.exit}
@@ -69,8 +69,6 @@
 
 (defn cmd-input [cmd-obj input]
   (let [stdin (.-stdin (get-in @cmd-obj [:proc :process]))]
-    (object/update! cmd-obj [:proc] (fn [p]
-                                       (assoc p :out nil :error nil)))
     (.write stdin input)))
 
 (defn get-cmd [editor]
