@@ -90,14 +90,29 @@
 (defn popup-start-inline []
   (interact/popup-set-command "guile"
                               (fn [cmd]
+                                (object/add-tags (pool/last-active) [:editor.interactive.inline (keyword (str "editor.interactive." cmd))])
                                 (let [editor (pool/last-active)
-                                      initial-cmd ",option prompt \";eval-finished\\n\""
-                                      separator ";eval-finished\n"
+                                      args (-> @editor :interact.cmd-args)
+                                      initial-cmd (-> @editor :interact.initial-cmd)
+                                      separator (-> @editor :interact.separator)
                                       on-output (fn [out err]
                                                   ((get-in @editor [:interact.result-fn]) out err))
                                       cmd-obj (cmd-process cmd [] initial-cmd separator on-output)]
-                                  (object/add-tags editor [:editor.interactive.inline])
                                   (object/merge! editor {:interact.client cmd-obj})))))
+
+(behavior :lt.plugins.interact/cmd-settings
+          :triggers #{:object.instant}
+          :desc "Interact: Set options for command"
+          :params [{:label "Command"}
+                   {:label "Arguments"}
+                   {:label "Initial command"}
+                   {:label "Command separator"}]
+          :type :user
+          :reaction (fn [this cmd args initial-cmd sep]
+                      (object/merge! this {:interact.cmd cmd
+                                           :interact.cmd-args args
+                                           :interact.initial-cmd initial-cmd
+                                           :interact.separator sep})))
 
 (cmd/command {:command :interact-inline
               :desc "Interact: Start inline interaction with a command."
