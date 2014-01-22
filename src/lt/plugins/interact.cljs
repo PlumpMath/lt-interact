@@ -55,16 +55,23 @@
                           (notifos/done-working (str command " started"))
                           nil)))
 
+(defn new-val-in? [ks old new]
+  (let [old-val (get-in old ks)
+        new-val (get-in new ks)]
+    (if (and new-val
+             (not= old-val new-val))
+      new-val)))
+
 (defn cmd-process [cmd args cb]
   (let [o (object/create ::runner cmd args)
         k (gensym cmd)]
     (add-watch o k (fn [_ _ old new]
-                     (let [old-out (get-in old [:proc :out])
-                           new-out (get-in new [:proc :out])
-                           err-out (get-in new [:proc :error])]
-                       (if (and new-out
-                                (not= old-out new-out))
-                         (cb new-out err-out)))))
+                     (when-let [new-out (new-val-in? [:proc :out] old new)]
+                       (cb new-out nil)
+                       (object/update! o [:proc :out] (constantly nil)))
+                     (when-let [new-err (new-val-in? [:proc :error] old new)]
+                       (cb nil new-err)
+                       (object/update! o [:proc :error] (constantly nil)))))
     o))
 
 (defn cmd-input [cmd-obj input]
@@ -90,8 +97,17 @@
 (defui text-input [default-value]
   [:input {:type "text", :value default-value}])
 
+(defn last-pos [editor]
+  (let [last-line (ed/last-line editor)
+        last-char (inc (count (ed/line editor last-line)))]
+    {:line last-line :ch last-char}))
+
 (defn new-input [editor]
-  (let [{:keys [line ch]} (-> @editor :interact.output-end)
+  (let [{:keys [line ch] :as end} (-> @editor :interact.output-end)
+        lline (ed/last-line editor)
+        [line ch] (if (and (not end) (not= line lline))
+                    [lline 1]
+                    [line ch])
         input (.slice (ed/line editor line) (dec ch))]
     input))
 
@@ -120,11 +136,6 @@
                                           (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)
                                           (.addKeyMap (-> @editor :ed)
                                                       #js {"Enter" eval-on-last-line})))}]})))
-
-(defn last-pos [editor]
-  (let [last-line (ed/last-line editor)
-        last-char (inc (count (ed/line editor last-line)))]
-    {:line last-line :ch last-char}))
 
 (defn append-result [editor]
   (fn [output error-output]
