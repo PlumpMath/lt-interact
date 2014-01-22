@@ -31,17 +31,17 @@
 (behavior ::on-proc-out
           :triggers #{:proc.out}
           :reaction (fn [this data]
-                      (object/update! this [:proc :out] (constantly (.toString data)))))
+                      (object/merge! this {:proc {:out (.toString data)}})))
 
 (behavior ::on-proc-error
           :triggers #{:proc.error}
           :reaction (fn [this data]
-                      (object/update! this [:proc :error] (constantly (.toString data)))))
+                      (object/merge! this {:proc {:error (.toString data)}})))
 
 (behavior ::on-proc-exit
           :triggers #{:proc.exit}
           :reaction (fn [this data]
-                      (object/update! this [:running] (constantly false))))
+                      (object/merge! this {:running false})))
 
 (object/object* ::runner
                 :behaviors [::on-proc-out ::on-proc-error ::on-proc-exit]
@@ -51,7 +51,7 @@
                         (let [p (proc/simple-spawn* this {:command command, :args args} nil {})]
                           (when init-fn
                             (init-fn p))
-                          (object/update! this [:proc :process] (fn [_ n] n) p)
+                          (object/merge! this {:proc {:process p}})
                           (notifos/done-working (str command " started"))
                           nil)))
 
@@ -68,10 +68,10 @@
     (add-watch o k (fn [_ _ old new]
                      (when-let [new-out (new-val-in? [:proc :out] old new)]
                        (cb new-out nil)
-                       (object/update! o [:proc :out] (constantly nil)))
+                       (object/merge! o {:proc {:out nil}}))
                      (when-let [new-err (new-val-in? [:proc :error] old new)]
                        (cb nil new-err)
-                       (object/update! o [:proc :error] (constantly nil)))))
+                       (object/merge! o {:proc {:error nil}}))))
     o))
 
 (defn cmd-input [cmd-obj input]
@@ -132,8 +132,8 @@
                                               editor (pool/last-active)
                                               cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
                                           (object/add-tags editor [:editor.interactive])
-                                          (object/update! editor [:interact.result-fn] (fn [_ n] n) (append-result editor))
-                                          (object/update! editor [:interact.client] (fn [_ n] n) cmd-obj)
+                                          (object/merge! editor {:interact.client cmd-obj
+                                                                 :interact.result-fn (append-result editor)})
                                           (.addKeyMap (-> @editor :ed)
                                                       #js {"Enter" eval-on-last-line})))}]})))
 
@@ -141,7 +141,7 @@
   (fn [output error-output]
     (ed/replace editor (last-pos editor) (or output ""))
     (ed/replace editor (last-pos editor) (or error-output ""))
-    (object/update! editor [:interact.output-end] (fn [_ n] n) (last-pos editor))
+    (object/merge! editor {:interact.output-end (last-pos editor)})
     (ed/move-cursor editor (update-in (last-pos editor) [:ch] dec))))
 
 (behavior ::on-eval.one
