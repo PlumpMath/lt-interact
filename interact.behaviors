@@ -1,2 +1,3 @@
 {:+ {:app [(:lt.objs.plugins/load-js ["interact_compiled.js"])]
-     :editor.interactive [:lt.plugins.interact/on-eval.one]}}
+     :editor.interactive [:lt.plugins.interact/on-eval.one]
+     :editor.interactive.inline [:lt.plugins.interact.inline/on-eval.one]}}

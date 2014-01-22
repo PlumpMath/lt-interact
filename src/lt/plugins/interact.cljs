@@ -119,8 +119,8 @@
       (cmd-input (get-cmd editor) (str (new-input editor) "\n")))
     (.execCommand cm "newlineAndIndent")))
 
-(defn popup-set-cmd []
-  (let [input (text-input "zsh")]
+(defn popup-set-command [default f]
+  (let [input (text-input default)]
     (popup/popup! {:header "Set the name of the command you want to interact with"
                    :body [:div
                           [:label "Name or path of command"]
@@ -128,14 +128,18 @@
                    :buttons [{:label "cancel"}
                              {:label "submit"
                               :action (fn []
-                                        (let [cmd (dom/val input)
-                                              editor (pool/last-active)
-                                              cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
-                                          (object/add-tags editor [:editor.interactive])
-                                          (object/merge! editor {:interact.client cmd-obj
-                                                                 :interact.result-fn (append-result editor)})
-                                          (.addKeyMap (-> @editor :ed)
-                                                      #js {"Enter" eval-on-last-line})))}]})))
+                                        (f (dom/val input)))}]})))
+
+(defn popup-set-cmd []
+  (popup-set-command "zsh"
+                     (fn [cmd]
+                       (let [editor (pool/last-active)
+                             cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
+                         (object/add-tags editor [:editor.interactive])
+                         (object/merge! editor {:interact.client cmd-obj
+                                                :interact.result-fn (append-result editor)})
+                         (.addKeyMap (-> @editor :ed)
+                                     #js {"Enter" eval-on-last-line})))))
 
 (defn append-result [editor]
   (fn [output error-output]
