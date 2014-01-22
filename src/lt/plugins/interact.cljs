@@ -128,7 +128,8 @@
 
 (defn append-result [editor]
   (fn [output error-output]
-    (ed/replace editor (last-pos editor) output)
+    (ed/replace editor (last-pos editor) (or output ""))
+    (ed/replace editor (last-pos editor) (or error-output ""))
     (object/update! editor [:interact.output-end] (fn [_ n] n) (last-pos editor))
     (ed/move-cursor editor (update-in (last-pos editor) [:ch] dec))))
 
