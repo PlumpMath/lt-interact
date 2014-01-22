@@ -128,7 +128,8 @@
                    :buttons [{:label "cancel"}
                              {:label "submit"
                               :action (fn []
-                                        (f (dom/val input)))}]})))
+                                        (f (dom/val input)))}]})
+    (dom/focus input)))
 
 (defn popup-set-cmd []
   (popup-set-command "zsh"
