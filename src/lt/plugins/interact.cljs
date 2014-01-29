@@ -31,12 +31,12 @@
 (behavior ::on-proc-out
           :triggers #{:proc.out}
           :reaction (fn [this data]
-                      (object/merge! this {:proc {:out (.toString data)}})))
+                      (object/update! this [:proc] merge {:out (.toString data)})))
 
 (behavior ::on-proc-error
           :triggers #{:proc.error}
           :reaction (fn [this data]
-                      (object/merge! this {:proc {:error (.toString data)}})))
+                      (object/update! this [:proc] merge {:error (.toString data)})))
 
 (behavior ::on-proc-exit
           :triggers #{:proc.exit}
@@ -51,7 +51,7 @@
                         (let [p (proc/simple-spawn* this {:command command, :args args} nil {})]
                           (when init-fn
                             (init-fn p))
-                          (object/merge! this {:proc {:process p}})
+                          (object/update! this [:proc] merge {:process p})
                           (notifos/done-working (str command " started"))
                           nil)))
 
@@ -68,10 +68,10 @@
     (add-watch o k (fn [_ _ old new]
                      (when-let [new-out (new-val-in? [:proc :out] old new)]
                        (cb new-out nil)
-                       (object/merge! o {:proc {:out nil}}))
+                       (object/update! o [:proc] merge {:out nil}))
                      (when-let [new-err (new-val-in? [:proc :error] old new)]
                        (cb nil new-err)
-                       (object/merge! o {:proc {:error nil}}))))
+                       (object/update! o [:proc] merge {:error nil}))))
     o))
 
 (defn cmd-input [cmd-obj input]
