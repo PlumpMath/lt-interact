@@ -116,7 +116,8 @@
         last-line (ed/last-line editor)
         cur-line (:line (ed/->cursor editor))]
     (when (= cur-line last-line)
-      (cmd-input (get-cmd editor) (str (new-input editor) "\n")))
+      (cmd-input (get-cmd editor) (str (new-input editor) "\n"))
+      (ed/move-cursor editor (last-pos editor)))
     (.execCommand cm "newlineAndIndent")))
 
 (defn popup-set-command [default f]
