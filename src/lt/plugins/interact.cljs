@@ -136,7 +136,8 @@
   (popup-set-command "zsh"
                      (fn [cmd]
                        (let [editor (pool/last-active)
-                             cmd-obj (cmd-process cmd [] #((get-in @editor [:interact.result-fn]) %1 %2))]
+                             [cmd & args] (string/split cmd #" ")
+                             cmd-obj (cmd-process cmd args #((get-in @editor [:interact.result-fn]) %1 %2))]
                          (object/add-tags editor [:editor.interactive])
                          (object/merge! editor {:interact.client cmd-obj
                                                 :interact.result-fn (append-result editor)})
